@@ -1,0 +1,139 @@
+﻿@page "/myitems"
+@rendermode InteractiveServer
+@using ERPAPP.Data
+@inject MyDbContext Db
+
+<h3>My Items</h3>
+
+<!-- Display the list in a table -->
+<table>
+    <thead>
+        <tr>
+            <th>ItemID</th>
+            <th>ItemName</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in items)
+        {
+            <tr>
+                <td>@item.ItemID</td>
+                <td>@item.ItemName</td>
+                <td>@item.Description</td>
+                <td>
+                    <button @onclick="() => EditItem(item)">Edit</button>
+                    <button @onclick="() => DeleteItem(item.ItemID)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr />
+
+<!-- This heading changes based on whether we're editing or inserting a new item -->
+<h4>@(editItem.ItemID == 0 ? "Add New Item" : "Edit Item")</h4>
+
+<div>
+    <label>Item Name:</label>
+    <input @bind="editItem.ItemName" />
+</div>
+<div>
+    <label>Description:</label>
+    <input @bind="editItem.Description" />
+</div>
+<br />
+<button @onclick="SaveItem">Save</button>
+<button @onclick="CancelEdit">Cancel</button>
+
+@code {
+    private List<MyItem> items = new();
+    private MyItem editItem = new(); // Initially a blank item for "Add New Item"
+
+    // Load all items from the database on component initialization
+    protected override void OnInitialized()
+    {
+        LoadItems();
+    }
+
+    private void LoadItems()
+    {
+        try
+        {
+            items = Db.MyItems.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading items: " + ex.Message);
+        }
+    }
+
+    // User clicked "Edit": copy the existing item's data into editItem for editing
+    private void EditItem(MyItem item)
+    {
+        editItem = new MyItem
+            {
+                ItemID = item.ItemID,
+                ItemName = item.ItemName,
+                Description = item.Description
+            };
+    }
+
+    // User clicked "Delete": remove from DB, then refresh the list
+    private void DeleteItem(int itemId)
+    {
+        try
+        {
+            var item = Db.MyItems.FirstOrDefault(x => x.ItemID == itemId);
+            if (item != null)
+            {
+                Db.MyItems.Remove(item);
+                Db.SaveChanges();
+                LoadItems();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error deleting item: " + ex.Message);
+        }
+    }
+
+    // User clicked "Save": either insert (ItemID == 0) or update an existing item
+    private void SaveItem()
+    {
+        try
+        {
+            if (editItem.ItemID == 0)
+            {
+                // New item
+                Db.MyItems.Add(editItem);
+            }
+            else
+            {
+                // Update existing
+                var existing = Db.MyItems.FirstOrDefault(x => x.ItemID == editItem.ItemID);
+                if (existing != null)
+                {
+                    existing.ItemName = editItem.ItemName;
+                    existing.Description = editItem.Description;
+                }
+            }
+
+            Db.SaveChanges();
+            LoadItems();
+            CancelEdit();  // Clear the form
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error saving item: " + ex.Message);
+        }
+    }
+
+    // Reset the editItem to a blank item, restoring "Add New Item" mode
+    private void CancelEdit()
+    {
+        editItem = new MyItem();
+    }
+}
