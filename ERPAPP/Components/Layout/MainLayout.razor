@@ -1,30 +1,17 @@
 @inherits LayoutComponentBase
 
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="ERPAPP.styles.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-</head>
-<body>
-    <div class="page">
-        <div class="sidebar">
-            <NavMenu />
-        </div>
-        <main>
-            <div class="top-row px-4">
-                <h1>ERP APP</h1>
-            </div>
-            <div class="content px-4">
-                @Body
-            </div>
-        </main>
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
     </div>
 
-    <script src="_framework/blazor.server.js"></script>
-</body>
-</html>
+    <main>
+        <div class="top-row px-4">
+            <h1>ERP APP</h1>
+        </div>
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </main>
+</div>
