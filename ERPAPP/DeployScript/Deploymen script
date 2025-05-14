@@ -1,0 +1,41 @@
+copy and paste ALL of the below straight into ubuntu console and press enter... assuming git repo is public
+
+sudo apt update && sudo apt install -y apache2 git wget curl unzip && \
+sudo a2enmod proxy && sudo a2enmod proxy_http && sudo a2enmod rewrite && \
+sudo systemctl restart apache2 && \
+sudo rm -rf /var/www/ERPAPP /var/www/erpapp-publish /etc/apache2/sites-available/erpapp.conf /etc/apache2/sites-enabled/erpapp.conf /etc/systemd/system/erpapp.service && \
+cd /var/www && \
+sudo git clone https://github.com/THarmse/ERPAPP.git && \
+sudo /usr/share/dotnet/dotnet publish /var/www/ERPAPP/ERPAPP/ERPAPP.csproj -c Release -f net9.0 -r linux-x64 --self-contained false -o /var/www/erpapp-publish && \
+echo '<VirtualHost *:80>
+    ServerName localhost
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:5000/
+    ProxyPassReverse / http://localhost:5000/
+    ErrorLog ${APACHE_LOG_DIR}/erpapp_error.log
+    CustomLog ${APACHE_LOG_DIR}/erpapp_access.log combined
+</VirtualHost>' | sudo tee /etc/apache2/sites-available/erpapp.conf > /dev/null && \
+sudo a2dissite 000-default.conf && \
+sudo a2ensite erpapp.conf && \
+sudo systemctl reload apache2 && \
+echo '[Unit]
+Description=ERPAPP .NET App (Kestrel behind Apache)
+After=network.target
+
+[Service]
+WorkingDirectory=/var/www/erpapp-publish
+ExecStart=/usr/share/dotnet/dotnet /var/www/erpapp-publish/ERPAPP.dll --urls=http://localhost:5000
+Restart=always
+RestartSec=5
+SyslogIdentifier=erpapp
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_ROOT=/usr/share/dotnet
+Environment=PATH=/usr/share/dotnet:$PATH
+
+[Install]
+WantedBy=multi-user.target' | sudo tee /etc/systemd/system/erpapp.service > /dev/null && \
+sudo systemctl daemon-reexec && \
+sudo systemctl daemon-reload && \
+sudo systemctl start erpapp && \
+sudo systemctl enable erpapp
