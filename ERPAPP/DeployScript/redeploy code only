@@ -1,0 +1,7 @@
+cd / && \
+sudo systemctl stop erpapp && \
+sudo rm -rf /var/www/ERPAPP /var/www/erpapp-publish && \
+cd /var/www && \
+sudo git clone https://github.com/THarmse/ERPAPP.git && \
+sudo /usr/share/dotnet/dotnet publish /var/www/ERPAPP/ERPAPP/ERPAPP.csproj -c Release -f net9.0 -r linux-x64 --self-contained false -o /var/www/erpapp-publish && \
+sudo systemctl start erpapp
